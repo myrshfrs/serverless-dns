@@ -94,7 +94,9 @@ export default class IOState {
       exceptionFrom: this.exceptionFrom,
       exceptionStack: this.exceptionStack,
     };
+    this.decodedDnsPacket = dnsutil.decode(servfail);
 
+    this.logDnsPkt();
     this.httpResponse = new Response(servfail, {
       headers: util.concatHeaders(
         this.headers(servfail),
@@ -137,9 +139,22 @@ export default class IOState {
       this.decodedDnsPacket = dnsPacket || dnsutil.decode(arrayBuffer);
     }
 
+    this.logDnsPkt();
     this.httpResponse = new Response(arrayBuffer, {
       headers: this.headers(arrayBuffer),
     });
+  }
+
+  logDnsPkt() {
+    if (this.isProd) return;
+    this.log.d(
+      "domains",
+      dnsutil.extractDomains(this.decodedDnsPacket),
+      dnsutil.getQueryType(this.decodedDnsPacket) || "",
+      "data",
+      dnsutil.getInterestingAnswerData(this.decodedDnsPacket),
+      dnsutil.ttl(this.decodedDnsPacket)
+    );
   }
 
   dnsBlockResponse(blockflag) {
